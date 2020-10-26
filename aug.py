@@ -12,6 +12,7 @@ def get_transforms(size: int, scope: str = 'geometric', crop='random'):
                                         albu.CLAHE(clip_limit=2),
                                         albu.IAASharpen(),
                                         albu.IAAEmboss(),
+                                        albu.RandomBrightnessContrast(),
                                         albu.RandomGamma()
                                     ], p=0.5),
                                     albu.OneOf([
@@ -21,20 +22,20 @@ def get_transforms(size: int, scope: str = 'geometric', crop='random'):
                                     ]),
             'weak': albu.Compose([albu.HorizontalFlip(),
                                   ]),
-            'geometric': albu.OneOf([albu.HorizontalFlip(),
-                                     albu.ShiftScaleRotate(),
-                                     albu.Transpose(),
-                                     albu.OpticalDistortion(),
-                                     albu.ElasticTransform(),
+            'geometric': albu.OneOf([albu.HorizontalFlip(always_apply=True),
+                                     albu.ShiftScaleRotate(always_apply=True),
+                                     albu.Transpose(always_apply=True),
+                                     albu.OpticalDistortion(always_apply=True),
+                                     albu.ElasticTransform(always_apply=True),
                                      ])
             }
 
     aug_fn = augs[scope]
-    crop_fn = {'random': albu.RandomCrop(size, size),
-               'center': albu.CenterCrop(size, size)}[crop]
+    crop_fn = {'random': albu.RandomCrop(size, size, always_apply=True),
+               'center': albu.CenterCrop(size, size, always_apply=True)}[crop]
     pad = albu.PadIfNeeded(size, size)
 
-    pipeline = albu.Compose([aug_fn, crop_fn, pad])
+    pipeline = albu.Compose([aug_fn, crop_fn, pad], additional_targets={'target': 'image'})
 
     def process(a, b):
         r = pipeline(image=a, target=b)
@@ -45,7 +46,7 @@ def get_transforms(size: int, scope: str = 'geometric', crop='random'):
 
 def get_normalize():
     normalize = albu.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-    normalize = albu.Compose([normalize])
+    normalize = albu.Compose([normalize], additional_targets={'target': 'image'})
 
     def process(a, b):
         r = normalize(image=a, target=b)
@@ -61,7 +62,12 @@ def _resolve_aug_fn(name):
         'hsv_shift': albu.HueSaturationValue,
         'motion_blur': albu.MotionBlur,
         'median_blur': albu.MedianBlur,
+        'snow': albu.RandomSnow,
+        'shadow': albu.RandomShadow,
+        'fog': albu.RandomFog,
+        'brightness_contrast': albu.RandomBrightnessContrast,
         'gamma': albu.RandomGamma,
+        'sun_flare': albu.RandomSunFlare,
         'sharpen': albu.IAASharpen,
         'jpeg': albu.JpegCompression,
         'gray': albu.ToGray,

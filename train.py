@@ -87,6 +87,7 @@ class Trainer:
     def _validate(self, epoch):
         self.metric_counter.clear()
         epoch_size = config.get('val_batches_per_epoch') or len(self.val_dataset)
+        # tq = tqdm.tqdm(self.val_dataset, total=epoch_size)
         tq = tqdm.tqdm(self.val_dataset.dataset, total=epoch_size)
         tq.set_description('Validation')
         i = 0
